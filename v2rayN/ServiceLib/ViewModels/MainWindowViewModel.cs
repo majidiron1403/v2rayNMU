@@ -673,6 +673,9 @@ public partial class MainWindowViewModel : MyReactiveObject
 
     public async Task Reload()
     {
+        // never start a core while an instance switch is half done
+        await InstanceManager.Instance.WaitIdle();
+
         //If there are unfinished reload job, marked with next job.
         if (!await _reloadSemaphore.WaitAsync(0))
         {

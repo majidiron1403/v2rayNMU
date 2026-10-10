@@ -157,6 +157,44 @@ public sealed class InstanceManager
         }
     }
 
+    /// <summary>
+    ///     Local socks port of an instance, read from ITS OWN guiNConfig.json
+    ///     (live config for the active instance).
+    /// </summary>
+    public int GetPort(string id)
+    {
+        try
+        {
+            if (id == CurrentId)
+            {
+                return AppManager.Instance.Config.Inbound?.FirstOrDefault()?.LocalPort ?? 0;
+            }
+
+            var file = Path.Combine(DirOf(id), "guiConfigs", Global.ConfigFileName);
+            if (File.Exists(file))
+            {
+                var cfg = JsonUtils.Deserialize<Config>(File.ReadAllText(file));
+                var port = cfg?.Inbound?.FirstOrDefault()?.LocalPort ?? 0;
+                if (port > 0)
+                {
+                    return port;
+                }
+            }
+            return Items.FirstOrDefault(t => t.Id == id)?.Port ?? 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    /// <summary>Wait until a running instance switch has finished (used by Reload so it never sees a half-loaded instance).</summary>
+    public async Task WaitIdle()
+    {
+        await _switchLock.WaitAsync();
+        _switchLock.Release();
+    }
+
     public bool IsRunning(string id)
     {
         if (id == CurrentId)
@@ -260,6 +298,12 @@ public sealed class InstanceManager
 
         // always refresh the UI so it shows whatever state the app is really in
         AppEvents.InstanceChanged.Publish(CurrentId);
+        try
+        {
+            var count = (await AppManager.Instance.ProfileItems(string.Empty))?.Count ?? 0;
+            Notify($"Instance '{Current.Name}' loaded: port {GetPort(CurrentId)}, {count} servers, data: {Utils.DataPath()}");
+        }
+        catch { }
         return CurrentId == id;
     }
 

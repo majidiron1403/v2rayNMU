@@ -164,7 +164,7 @@ public partial class MainWindowViewModel
                 var list = manager.Items.Select(t => new InstanceOption
                 {
                     Id = t.Id,
-                    Display = $"{(manager.IsRunning(t.Id) ? "●" : "○")} {t.Name}" + (t.Id == InstanceManager.DefaultId ? $" (:{_config.Inbound.FirstOrDefault()?.LocalPort ?? 10808})" : $" (:{t.Port})"),
+                    Display = $"{(manager.IsRunning(t.Id) ? "●" : "○")} {t.Name}" + $" (:{manager.GetPort(t.Id)})",
                 }).ToList();
                 Instances = list;
                 SelectedInstance = list.FirstOrDefault(t => t.Id == manager.CurrentId);

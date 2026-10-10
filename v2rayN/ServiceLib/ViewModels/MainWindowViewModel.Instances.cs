@@ -91,7 +91,12 @@ public partial class MainWindowViewModel
             .SubscribeAsync(async _ =>
             {
                 RefreshInstances();
+
+                // Everything below must come from the NEW instance only: groups, routing, tray/status bar, server list.
+                await RefreshSubscriptions();
+                await StatusBarViewModel.ApplyInstanceState();
                 await RefreshServersDispatcherAsync();
+                ReloadResult(AppManager.Instance.IsRunningCore(ECoreType.sing_box) && CoreManager.Instance.IsCoreRunning);
                 if (_config.UiItem.EnableAutoAdjustMainLvColWidth)
                 {
                     await ProfilesViewModel.AdjustMainLvColWidth();

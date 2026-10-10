@@ -224,6 +224,19 @@ public partial class StatusBarViewModel : MyReactiveObject
         BlRouting = true;
     }
 
+    /// <summary>
+    ///     Re-read everything the status bar shows from the (just switched) active instance:
+    ///     routing list, listening ports, system proxy mode and TUN switch.
+    /// </summary>
+    public async Task ApplyInstanceState()
+    {
+        await ConfigHandler.InitBuiltinRouting(_config);
+        await RefreshRoutingsMenu();
+        await InboundDisplayStatus();
+        SystemProxySelected = (int)_config.SystemProxyItem.SysProxyType;
+        EnableTun = _config.TunModeItem.EnableTun;
+    }
+
     private async Task CopyProxyCmdToClipboard()
     {
         var cmd = Utils.IsWindows() ? "set" : "export";

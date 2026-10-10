@@ -82,6 +82,12 @@ public sealed class AppManager
             Environment.SetEnvironmentVariable("DOTNET_EnableWriteXorExecute", "0", EnvironmentVariableTarget.User);
         }
 
+        EnsureTables();
+        return true;
+    }
+
+    public void EnsureTables()
+    {
         SQLiteHelper.Instance.CreateTable<SubItem>();
         SQLiteHelper.Instance.CreateTable<ProfileItem>();
         SQLiteHelper.Instance.CreateTable<ServerStatItem>();
@@ -92,6 +98,28 @@ public sealed class AppManager
 #pragma warning disable CS0618
         SQLiteHelper.Instance.CreateTable<ProfileGroupItem>();
 #pragma warning restore CS0618
+    }
+
+    /// <summary>
+    ///     Reload guiNConfig.json of the active instance data directory into the SAME Config object,
+    ///     so every view model that already holds a reference to it sees the new values.
+    /// </summary>
+    public bool ReloadConfigInPlace()
+    {
+        var fresh = ConfigHandler.LoadConfig();
+        if (fresh == null)
+        {
+            return false;
+        }
+
+        foreach (var prop in typeof(Config).GetProperties())
+        {
+            if (prop.CanRead && prop.CanWrite && prop.GetIndexParameters().Length == 0)
+            {
+                prop.SetValue(_config, prop.GetValue(fresh));
+            }
+        }
+        Reset();
         return true;
     }
 
@@ -133,6 +161,7 @@ public sealed class AppManager
             await ProfileExManager.Instance.SaveTo();
             await StatisticsManager.Instance.SaveTo();
             await CoreManager.Instance.CoreStop();
+            await InstanceManager.Instance.StopAllBackground();
             StatisticsManager.Instance.Close();
 
             Logging.SaveLog("AppExitAsync End");

@@ -332,6 +332,32 @@
                     </ToolBar>
                 </ToolBarTray>
 
+                <StackPanel
+                    Margin="8,2,8,4"
+                    DockPanel.Dock="Top"
+                    Orientation="Horizontal">
+                    <TextBlock Margin="0,0,6,0" VerticalAlignment="Center" Text="Instance" />
+                    <ComboBox
+                        x:Name="cmbInstances"
+                        MinWidth="220"
+                        Margin="0,0,6,0"
+                        ToolTip="Switch between independent profiles (own server list, own port). Cores of other instances keep running." />
+                    <TextBox
+                        x:Name="txtInstanceName"
+                        MinWidth="140"
+                        Margin="0,0,6,0"
+                        materialDesign:HintAssist.Hint="New instance name" />
+                    <Button
+                        x:Name="btnAddInstance"
+                        Margin="0,0,6,0"
+                        Content="+ Add" />
+                    <Button
+                        x:Name="btnStopInstance"
+                        Margin="0,0,6,0"
+                        Content="Stop core" />
+                    <Button x:Name="btnRemoveInstance" Content="Delete" />
+                </StackPanel>
+
                 <ContentControl x:Name="contentStatusBarView" DockPanel.Dock="Bottom" />
 
                 <Grid>

@@ -16,6 +16,7 @@ public partial class MainWindow
     public MainWindow()
     {
         InitializeComponent();
+        cmbInstances.SelectionChanged += CmbInstances_SelectionChanged;
 
         _config = AppManager.Instance.Config;
         ThreadPool.RegisterWaitForSingleObject(App.ProgramStarted, OnProgramStarted, null, -1, false);
@@ -74,6 +75,24 @@ public partial class MainWindow
             this.BindCommand(ViewModel, vm => vm.RegionalPresetDefaultCmd, v => v.menuRegionalPresetsDefault).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.RegionalPresetRussiaCmd, v => v.menuRegionalPresetsRussia).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.RegionalPresetIranCmd, v => v.menuRegionalPresetsIran).DisposeWith(disposables);
+
+            //instances
+            this.Bind(ViewModel, vm => vm.NewInstanceName, v => v.txtInstanceName.Text).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.AddInstanceCmd, v => v.btnAddInstance).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.StopInstanceCmd, v => v.btnStopInstance).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.RemoveInstanceCmd, v => v.btnRemoveInstance).DisposeWith(disposables);
+            this.WhenAnyValue(v => v.ViewModel.Instances)
+                .Subscribe(list => cmbInstances.ItemsSource = list)
+                .DisposeWith(disposables);
+            this.WhenAnyValue(v => v.ViewModel.SelectedInstance)
+                .Subscribe(option =>
+                {
+                    if (!ReferenceEquals(cmbInstances.SelectedItem, option))
+                    {
+                        cmbInstances.SelectedItem = option;
+                    }
+                })
+                .DisposeWith(disposables);
 
             this.BindCommand(ViewModel, vm => vm.ReloadCmd, v => v.menuReload).DisposeWith(disposables);
             this.OneWayBind(ViewModel, vm => vm.BlReloadEnabled, v => v.menuReload.IsEnabled).DisposeWith(disposables);
@@ -455,4 +474,12 @@ public partial class MainWindow
     }
 
     #endregion UI
+
+    private void CmbInstances_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (cmbInstances.SelectedItem is InstanceOption option && ViewModel != null)
+        {
+            ViewModel.SelectedInstance = option;
+        }
+    }
 }

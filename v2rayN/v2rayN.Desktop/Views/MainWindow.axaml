@@ -121,6 +121,25 @@
                     IsVisible="False" />
             </DockPanel>
 
+            <StackPanel
+                Margin="8,0,8,4"
+                DockPanel.Dock="Top"
+                Orientation="Horizontal"
+                Spacing="6">
+                <TextBlock VerticalAlignment="Center" Text="Instance" />
+                <ComboBox
+                    x:Name="cmbInstances"
+                    MinWidth="220"
+                    ToolTip.Tip="Switch between independent profiles (own server list, own port). Cores of other instances keep running." />
+                <TextBox
+                    x:Name="txtInstanceName"
+                    MinWidth="140"
+                    PlaceholderText="New instance name" />
+                <Button x:Name="btnAddInstance" Content="+ Add" />
+                <Button x:Name="btnStopInstance" Content="Stop core" />
+                <Button x:Name="btnRemoveInstance" Content="Delete" />
+            </StackPanel>
+
             <ContentControl x:Name="contentStatusBarView" DockPanel.Dock="Bottom" />
 
             <Grid>

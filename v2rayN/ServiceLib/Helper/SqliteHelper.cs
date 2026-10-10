@@ -6,13 +6,33 @@ public sealed class SQLiteHelper
 {
     private static readonly Lazy<SQLiteHelper> _instance = new(() => new());
     public static SQLiteHelper Instance => _instance.Value;
-    private readonly string _connstr;
+    private string _connstr;
     private SQLiteConnection _db;
     private SQLiteAsyncConnection _dbAsync;
     private readonly string _configDB = "guiNDB.db";
 
     public SQLiteHelper()
     {
+        _connstr = Utils.GetConfigPath(_configDB);
+        _db = new SQLiteConnection(_connstr, false);
+        _dbAsync = new SQLiteAsyncConnection(_connstr, false);
+    }
+
+    /// <summary>
+    ///     Close the current database and open the one under the (new) active instance data directory.
+    /// </summary>
+    public void Reopen()
+    {
+        try
+        {
+            _db.Close();
+            _dbAsync.GetConnection().Close();
+        }
+        catch (Exception ex)
+        {
+            Logging.SaveLog("SQLiteHelper.Reopen", ex);
+        }
+
         _connstr = Utils.GetConfigPath(_configDB);
         _db = new SQLiteConnection(_connstr, false);
         _dbAsync = new SQLiteAsyncConnection(_connstr, false);

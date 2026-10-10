@@ -7,6 +7,12 @@ public static class SysProxyHandler
 
     public static async Task<bool> UpdateSysProxy(Config config, bool forceDisable)
     {
+        // Secondary instances never touch the system proxy; they are meant for per-application proxies.
+        if (InstanceManager.Instance.IsSecondary && !forceDisable)
+        {
+            return true;
+        }
+
         var type = config.SystemProxyItem.SysProxyType;
 
         if (forceDisable && type != ESysProxyType.Unchanged)

@@ -318,6 +318,8 @@ public partial class MainWindowViewModel : MyReactiveObject
             .ObserveOn(RxSchedulers.MainThreadScheduler)
             .SubscribeAsync(async blProxy => await UpdateSubscriptionProcess("", blProxy));
 
+        InitInstances();
+
         _ = Init();
     }
 
@@ -746,6 +748,7 @@ public partial class MainWindowViewModel : MyReactiveObject
         finally
         {
             SetReloadEnabled(true);
+            RefreshInstances();
             _reloadSemaphore.Release();
             //If there is a next reload job, execute it.
             if (_hasNextReloadJob)

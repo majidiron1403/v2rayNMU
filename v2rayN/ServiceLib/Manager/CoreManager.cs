@@ -144,6 +144,79 @@ public class CoreManager
         return await RunProcess(coreInfo, fileName, true, false);
     }
 
+    /// <summary>
+    ///     Snapshot of the running core processes of one instance. Used to keep the cores of an instance
+    ///     alive while another instance is shown in the UI.
+    /// </summary>
+    public sealed class RunState
+    {
+        public ProcessService? Main { get; init; }
+        public ProcessService? Pre { get; init; }
+        public bool LinuxSudo { get; init; }
+        public ECoreType RunningCoreType { get; init; }
+
+        public bool IsRunning => Main is { HasExited: false };
+
+        public async Task StopAsync()
+        {
+            try
+            {
+                if (Main != null)
+                {
+                    await Main.StopAsync();
+                    Main.Dispose();
+                }
+
+                if (Pre != null)
+                {
+                    await Pre.StopAsync();
+                    Pre.Dispose();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logging.SaveLog("CoreManager.RunState", ex);
+            }
+        }
+    }
+
+    /// <summary>Take the running processes out of this manager WITHOUT stopping them.</summary>
+    public RunState? Detach()
+    {
+        if (_processService == null && _processPreService == null)
+        {
+            return null;
+        }
+
+        var state = new RunState
+        {
+            Main = _processService,
+            Pre = _processPreService,
+            LinuxSudo = _linuxSudo,
+            RunningCoreType = AppManager.Instance.RunningCoreType,
+        };
+        _processService = null;
+        _processPreService = null;
+        _linuxSudo = false;
+        return state;
+    }
+
+    /// <summary>Put previously detached processes back, so the UI controls them again.</summary>
+    public void Attach(RunState? state)
+    {
+        if (state == null)
+        {
+            return;
+        }
+
+        _processService = state.Main;
+        _processPreService = state.Pre;
+        _linuxSudo = state.LinuxSudo;
+        AppManager.Instance.RunningCoreType = state.RunningCoreType;
+    }
+
+    public bool IsCoreRunning => _processService is { HasExited: false };
+
     public async Task CoreStop()
     {
         try

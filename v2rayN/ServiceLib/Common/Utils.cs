@@ -1184,9 +1184,20 @@ public class Utils
         return GetBaseDirectory();
     }
 
+    /// <summary>
+    ///     Data directory of the currently active instance. null = default instance (legacy layout, same as StartupPath).
+    ///     Cores (bin folder) are always shared and are NOT affected by this value.
+    /// </summary>
+    public static string? InstanceDataDir { get; set; }
+
+    public static string DataPath()
+    {
+        return InstanceDataDir.IsNullOrEmpty() ? StartupPath() : InstanceDataDir;
+    }
+
     public static string GetTempPath(string filename = "")
     {
-        var tempPath = Path.Combine(StartupPath(), "guiTemps");
+        var tempPath = Path.Combine(DataPath(), "guiTemps");
         if (!Directory.Exists(tempPath))
         {
             Directory.CreateDirectory(tempPath);
@@ -1204,7 +1215,7 @@ public class Utils
 
     public static string GetBackupPath(string filename)
     {
-        var tempPath = Path.Combine(StartupPath(), "guiBackups");
+        var tempPath = Path.Combine(DataPath(), "guiBackups");
         if (!Directory.Exists(tempPath))
         {
             Directory.CreateDirectory(tempPath);
@@ -1215,7 +1226,7 @@ public class Utils
 
     public static string GetConfigPath(string filename = "")
     {
-        var tempPath = Path.Combine(StartupPath(), "guiConfigs");
+        var tempPath = Path.Combine(DataPath(), "guiConfigs");
         if (!Directory.Exists(tempPath))
         {
             Directory.CreateDirectory(tempPath);
@@ -1260,7 +1271,7 @@ public class Utils
 
     public static string GetLogPath(string filename = "")
     {
-        var tempPath = Path.Combine(StartupPath(), "guiLogs");
+        var tempPath = Path.Combine(DataPath(), "guiLogs");
         if (!Directory.Exists(tempPath))
         {
             Directory.CreateDirectory(tempPath);
@@ -1296,7 +1307,7 @@ public class Utils
 
     public static string GetBinConfigPath(string filename = "")
     {
-        var tempPath = Path.Combine(StartupPath(), "binConfigs");
+        var tempPath = Path.Combine(DataPath(), "binConfigs");
         if (!Directory.Exists(tempPath))
         {
             Directory.CreateDirectory(tempPath);

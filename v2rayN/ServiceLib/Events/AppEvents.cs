@@ -14,4 +14,7 @@ public static class AppEvents
     public static readonly EventChannel<bool> ShutdownRequested = new();
 
     public static readonly EventChannel<ESysProxyType> SysProxyChangeRequested = new();
+
+    /// <summary>Raised after the active instance changed (data directory, database and config already switched).</summary>
+    public static readonly EventChannel<string> InstanceChanged = new();
 }

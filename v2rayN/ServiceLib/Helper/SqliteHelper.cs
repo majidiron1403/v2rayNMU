@@ -11,31 +11,34 @@ public sealed class SQLiteHelper
     private SQLiteAsyncConnection _dbAsync;
     private readonly string _configDB = "guiNDB.db";
 
+    // One open connection pair per database file. Connections are kept open and reused when switching
+    // instances: sqlite-net's async pool hands back a CLOSED connection if the same file is closed and reopened
+    // ("Cannot create commands from unopened database"), so we never close them while the app runs.
+    private readonly Dictionary<string, (SQLiteConnection Sync, SQLiteAsyncConnection Async)> _connections = new();
+
     public SQLiteHelper()
     {
+        Select();
+    }
+
+    private void Select()
+    {
         _connstr = Utils.GetConfigPath(_configDB);
-        _db = new SQLiteConnection(_connstr, false);
-        _dbAsync = new SQLiteAsyncConnection(_connstr, false);
+        if (!_connections.TryGetValue(_connstr, out var pair))
+        {
+            pair = (new SQLiteConnection(_connstr, false), new SQLiteAsyncConnection(_connstr, false));
+            _connections[_connstr] = pair;
+        }
+        _db = pair.Sync;
+        _dbAsync = pair.Async;
     }
 
     /// <summary>
-    ///     Close the current database and open the one under the (new) active instance data directory.
+    ///     Switch to the database under the (new) active instance data directory.
     /// </summary>
     public void Reopen()
     {
-        try
-        {
-            _db.Close();
-            _dbAsync.GetConnection().Close();
-        }
-        catch (Exception ex)
-        {
-            Logging.SaveLog("SQLiteHelper.Reopen", ex);
-        }
-
-        _connstr = Utils.GetConfigPath(_configDB);
-        _db = new SQLiteConnection(_connstr, false);
-        _dbAsync = new SQLiteAsyncConnection(_connstr, false);
+        Select();
     }
 
     public CreateTableResult CreateTable<T>()

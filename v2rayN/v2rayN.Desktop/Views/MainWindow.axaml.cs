@@ -80,6 +80,7 @@ public partial class MainWindow : WindowBase<MainWindowViewModel>
             this.Bind(ViewModel, vm => vm.NewInstanceName, v => v.txtInstanceName.Text).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.AddInstanceCmd, v => v.btnAddInstance).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.StartAllInstancesCmd, v => v.btnStartAllInstances).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.RenameInstanceCmd, v => v.btnRenameInstance).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.StopInstanceCmd, v => v.btnStopInstance).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.RemoveInstanceCmd, v => v.btnRemoveInstance).DisposeWith(disposables);
             this.WhenAnyValue(v => v.ViewModel.Instances)

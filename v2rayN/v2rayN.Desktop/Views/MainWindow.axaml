@@ -136,6 +136,7 @@
                     MinWidth="140"
                     PlaceholderText="New instance name" />
                 <Button x:Name="btnAddInstance" Content="+ Add" />
+                <Button x:Name="btnRenameInstance" Content="Rename current" />
                 <Button x:Name="btnStartAllInstances" Content="Start all" />
                 <Button x:Name="btnStopInstance" Content="Stop core" />
                 <Button x:Name="btnRemoveInstance" Content="Delete" />

@@ -204,16 +204,20 @@ public sealed class InstanceManager
             Directory.CreateDirectory(Utils.DataPath());
             SQLiteHelper.Instance.Reopen();
             app.EnsureTables();
+            CurrentId = id;
             if (!app.ReloadConfigInPlace())
             {
-                return false;
+                Notify($"Instance '{Current.Name}': guiNConfig.json could not be loaded");
             }
-            CurrentId = id;
 
             // 4. first time: give the instance its own port and make sure it never touches the system proxy
-            var item = Current;
-            if (item.Fresh)
+            await Guard("first start", async () =>
             {
+                var item = Current;
+                if (!item.Fresh)
+                {
+                    return;
+                }
                 if (app.Config.Inbound.Count > 0 && item.Port > 0)
                 {
                     app.Config.Inbound[0].LocalPort = item.Port;
@@ -225,33 +229,61 @@ public sealed class InstanceManager
                     Save();
                 }
                 await ConfigHandler.SaveConfig(app.Config);
-            }
+            });
 
-            // 5. re-init the data bound managers for the new instance
-            await ConfigHandler.InitBuiltinDNS(app.Config);
-            await ConfigHandler.InitBuiltinFullConfigTemplate(app.Config);
-            await ProfileExManager.Instance.Init();
+            // 5. re-init the data bound managers for the new instance (each step on its own, so one failure never leaves the UI stale)
+            await Guard("dns", async () => { await ConfigHandler.InitBuiltinDNS(app.Config); });
+            await Guard("full config template", async () => { await ConfigHandler.InitBuiltinFullConfigTemplate(app.Config); });
+            await Guard("routing", async () => { await ConfigHandler.InitBuiltinRouting(app.Config); });
+            await Guard("profile ex", () => ProfileExManager.Instance.Init());
             if (_background.Remove(id, out var restored))
             {
                 CoreManager.Instance.Attach(restored);
             }
-            if (app.Config.GuiItem.EnableStatistics || app.Config.GuiItem.DisplayRealTimeSpeed)
+            await Guard("statistics", async () =>
             {
-                await StatisticsManager.Instance.Init(app.Config, _statisticsUpdate ?? (_ => Task.CompletedTask));
-            }
+                if (app.Config.GuiItem.EnableStatistics || app.Config.GuiItem.DisplayRealTimeSpeed)
+                {
+                    await StatisticsManager.Instance.Init(app.Config, _statisticsUpdate ?? (_ => Task.CompletedTask));
+                }
+            });
         }
         catch (Exception ex)
         {
             Logging.SaveLog(_tag, ex);
-            return false;
+            Notify($"Switch instance failed: {ex.Message}");
         }
         finally
         {
             _switchLock.Release();
         }
 
-        AppEvents.InstanceChanged.Publish(id);
-        return true;
+        // always refresh the UI so it shows whatever state the app is really in
+        AppEvents.InstanceChanged.Publish(CurrentId);
+        return CurrentId == id;
+    }
+
+    private static void Notify(string msg)
+    {
+        try
+        {
+            NoticeManager.Instance.SendMessage(msg);
+            NoticeManager.Instance.Enqueue(msg);
+        }
+        catch { }
+    }
+
+    private static async Task Guard(string step, Func<Task> action)
+    {
+        try
+        {
+            await action();
+        }
+        catch (Exception ex)
+        {
+            Logging.SaveLog(_tag, ex);
+            Notify($"Instance step '{step}' failed: {ex.Message}");
+        }
     }
 
     private Func<ServerSpeedItem, Task>? _statisticsUpdate;

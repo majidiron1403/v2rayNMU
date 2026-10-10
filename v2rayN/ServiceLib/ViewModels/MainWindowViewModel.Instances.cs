@@ -19,6 +19,7 @@ public partial class MainWindowViewModel
     public ReactiveCommand<RxVoid, RxVoid> AddInstanceCmd { get; private set; } = null!;
     public ReactiveCommand<RxVoid, RxVoid> RemoveInstanceCmd { get; private set; } = null!;
     public ReactiveCommand<RxVoid, RxVoid> StopInstanceCmd { get; private set; } = null!;
+    public ReactiveCommand<RxVoid, RxVoid> RenameInstanceCmd { get; private set; } = null!;
     public ReactiveCommand<RxVoid, RxVoid> StartAllInstancesCmd { get; private set; } = null!;
 
     [Reactive]
@@ -62,6 +63,18 @@ public partial class MainWindowViewModel
         {
             await InstanceManager.Instance.StopInstance(InstanceManager.Instance.CurrentId);
             RefreshInstances();
+        });
+
+        RenameInstanceCmd = ReactiveCommand.CreateFromTask(async () =>
+        {
+            if (NewInstanceName.IsNullOrEmpty())
+            {
+                return;
+            }
+            InstanceManager.Instance.Rename(InstanceManager.Instance.CurrentId, NewInstanceName);
+            NewInstanceName = string.Empty;
+            RefreshInstances();
+            await Task.CompletedTask;
         });
 
         StartAllInstancesCmd = ReactiveCommand.CreateFromTask(async () =>

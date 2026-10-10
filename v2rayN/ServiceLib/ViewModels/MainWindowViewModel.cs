@@ -347,6 +347,9 @@ public partial class MainWindowViewModel : MyReactiveObject
         await RefreshServersDispatcherAsync();
 
         await Reload();
+
+        // bring back the other instances that were running when the app was closed
+        await StartInstances(all: false);
     }
 
     #endregion Init
@@ -748,6 +751,10 @@ public partial class MainWindowViewModel : MyReactiveObject
         finally
         {
             SetReloadEnabled(true);
+            if (CoreManager.Instance.IsCoreRunning)
+            {
+                InstanceManager.Instance.SetAutoStart(InstanceManager.Instance.CurrentId, true);
+            }
             RefreshInstances();
             _reloadSemaphore.Release();
             //If there is a next reload job, execute it.

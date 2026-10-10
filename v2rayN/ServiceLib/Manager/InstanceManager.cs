@@ -15,6 +15,9 @@ public class InstanceItem
     /// <summary>true until the first time the instance was opened (used to apply the port once).</summary>
     public bool Fresh { get; set; }
 
+    /// <summary>true while the user wants this instance's core running; restored at the next app start.</summary>
+    public bool AutoStart { get; set; }
+
     public override string ToString() => Name;
 }
 
@@ -140,6 +143,20 @@ public sealed class InstanceManager
         }
     }
 
+    public void SetAutoStart(string id, bool value)
+    {
+        lock (_lock)
+        {
+            var item = _items.FirstOrDefault(t => t.Id == id);
+            if (item == null || item.AutoStart == value)
+            {
+                return;
+            }
+            item.AutoStart = value;
+            Save();
+        }
+    }
+
     public bool IsRunning(string id)
     {
         if (id == CurrentId)
@@ -245,8 +262,13 @@ public sealed class InstanceManager
     }
 
     /// <summary>Stop the cores of one instance (active or background).</summary>
-    public async Task StopInstance(string id)
+    public async Task StopInstance(string id, bool byUser = true)
     {
+        if (byUser)
+        {
+            SetAutoStart(id, false);
+        }
+
         if (id == CurrentId)
         {
             await CoreManager.Instance.CoreStop();
@@ -263,7 +285,7 @@ public sealed class InstanceManager
     {
         foreach (var id in _background.Keys.ToList())
         {
-            await StopInstance(id);
+            await StopInstance(id, false);
         }
     }
 

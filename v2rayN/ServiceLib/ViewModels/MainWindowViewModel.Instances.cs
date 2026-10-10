@@ -19,6 +19,7 @@ public partial class MainWindowViewModel
     public ReactiveCommand<RxVoid, RxVoid> AddInstanceCmd { get; private set; } = null!;
     public ReactiveCommand<RxVoid, RxVoid> RemoveInstanceCmd { get; private set; } = null!;
     public ReactiveCommand<RxVoid, RxVoid> StopInstanceCmd { get; private set; } = null!;
+    public ReactiveCommand<RxVoid, RxVoid> StartAllInstancesCmd { get; private set; } = null!;
 
     [Reactive]
     public partial List<InstanceOption> Instances { get; set; }
@@ -63,6 +64,11 @@ public partial class MainWindowViewModel
             RefreshInstances();
         });
 
+        StartAllInstancesCmd = ReactiveCommand.CreateFromTask(async () =>
+        {
+            await StartInstances(all: true);
+        });
+
         this.WhenAnyValue(x => x.SelectedInstance)
             .Where(y => y != null)
             .ObserveOn(RxSchedulers.MainThreadScheduler)
@@ -93,6 +99,39 @@ public partial class MainWindowViewModel
             });
 
         InstanceManager.Instance.SetStatisticsHandler(UpdateStatisticsHandler);
+        RefreshInstances();
+    }
+
+    /// <summary>
+    ///     Start the core of every instance (all = true) or of those that were running last time,
+    ///     one after another, then return to the instance that was shown. All of them stay running together.
+    /// </summary>
+    private async Task StartInstances(bool all)
+    {
+        var manager = InstanceManager.Instance;
+        var original = manager.CurrentId;
+
+        foreach (var item in manager.Items.ToList())
+        {
+            if (item.Id == original || manager.IsRunning(item.Id) || !(all || item.AutoStart))
+            {
+                continue;
+            }
+
+            if (await manager.SwitchTo(item.Id))
+            {
+                await Reload();
+            }
+        }
+
+        if (manager.CurrentId != original)
+        {
+            await manager.SwitchTo(original);
+        }
+        if (all && !manager.IsRunning(original))
+        {
+            await Reload();
+        }
         RefreshInstances();
     }
 

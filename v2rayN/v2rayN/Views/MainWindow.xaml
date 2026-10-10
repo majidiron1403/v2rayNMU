@@ -352,6 +352,10 @@
                         Margin="0,0,6,0"
                         Content="+ Add" />
                     <Button
+                        x:Name="btnStartAllInstances"
+                        Margin="0,0,6,0"
+                        Content="Start all" />
+                    <Button
                         x:Name="btnStopInstance"
                         Margin="0,0,6,0"
                         Content="Stop core" />
